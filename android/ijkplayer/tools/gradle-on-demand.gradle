@@ -20,6 +20,7 @@ gradle.startParameter.taskNames.each { task ->
         case "uploadArchives":
             apply from: new File(rootProject.projectDir, 'tools/gradle-mvn-push.gradle')
             break;
+        case "bU":
         case "bintrayUpload":
         case "install":
             apply from: new File(rootProject.projectDir, 'tools/gradle-bintray-upload.gradle')
