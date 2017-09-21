@@ -26,6 +26,8 @@ import android.media.MediaPlayer;
 import android.media.TimedText;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -355,83 +357,134 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer {
             MediaPlayer.OnErrorListener, MediaPlayer.OnInfoListener,
             MediaPlayer.OnTimedTextListener {
         public final WeakReference<AndroidMediaPlayer> mWeakMediaPlayer;
+        private Handler handler = new Handler(Looper.getMainLooper());
 
         public AndroidMediaPlayerListenerHolder(AndroidMediaPlayer mp) {
             mWeakMediaPlayer = new WeakReference<AndroidMediaPlayer>(mp);
         }
 
         @Override
-        public boolean onInfo(MediaPlayer mp, int what, int extra) {
-            AndroidMediaPlayer self = mWeakMediaPlayer.get();
-            return self != null && notifyOnInfo(what, extra);
+        public boolean onInfo(MediaPlayer mp, final int what, final int extra) {
+            return handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    AndroidMediaPlayer self = mWeakMediaPlayer.get();
+                    if (self != null) {
+                        notifyOnInfo(what, extra);
+                    }
+
+                }
+            });
+        }
+
+        @Override
+        public boolean onError(MediaPlayer mp, final int what, final int extra) {
+            return handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    AndroidMediaPlayer self = mWeakMediaPlayer.get();
+                    if (self != null) {
+                        notifyOnError(what, extra);
+                    }
+                }
+            });
 
         }
 
         @Override
-        public boolean onError(MediaPlayer mp, int what, int extra) {
-            AndroidMediaPlayer self = mWeakMediaPlayer.get();
-            return self != null && notifyOnError(what, extra);
+        public void onVideoSizeChanged(MediaPlayer mp, final int width, final int height) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    AndroidMediaPlayer self = mWeakMediaPlayer.get();
+                    if (self == null)
+                        return;
 
-        }
+                    notifyOnVideoSizeChanged(width, height, 1, 1);
+                }
+            });
 
-        @Override
-        public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-            AndroidMediaPlayer self = mWeakMediaPlayer.get();
-            if (self == null)
-                return;
-
-            notifyOnVideoSizeChanged(width, height, 1, 1);
         }
 
         @Override
         public void onSeekComplete(MediaPlayer mp) {
-            AndroidMediaPlayer self = mWeakMediaPlayer.get();
-            if (self == null)
-                return;
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    AndroidMediaPlayer self = mWeakMediaPlayer.get();
+                    if (self == null)
+                        return;
 
-            notifyOnSeekComplete();
+                    notifyOnSeekComplete();
+                }
+            });
+
         }
 
         @Override
-        public void onBufferingUpdate(MediaPlayer mp, int percent) {
-            AndroidMediaPlayer self = mWeakMediaPlayer.get();
-            if (self == null)
-                return;
+        public void onBufferingUpdate(MediaPlayer mp, final int percent) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    AndroidMediaPlayer self = mWeakMediaPlayer.get();
+                    if (self == null)
+                        return;
 
-            notifyOnBufferingUpdate(percent);
+                    notifyOnBufferingUpdate(percent);
+                }
+            });
+
         }
 
         @Override
         public void onCompletion(MediaPlayer mp) {
-            AndroidMediaPlayer self = mWeakMediaPlayer.get();
-            if (self == null)
-                return;
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    AndroidMediaPlayer self = mWeakMediaPlayer.get();
+                    if (self == null)
+                        return;
 
-            notifyOnCompletion();
+                    notifyOnCompletion();
+                }
+            });
+
         }
 
         @Override
         public void onPrepared(MediaPlayer mp) {
-            AndroidMediaPlayer self = mWeakMediaPlayer.get();
-            if (self == null)
-                return;
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    AndroidMediaPlayer self = mWeakMediaPlayer.get();
+                    if (self == null)
+                        return;
 
-            notifyOnPrepared();
+                    notifyOnPrepared();
+                }
+            });
+
         }
 
         @Override
-        public void onTimedText(MediaPlayer mp, TimedText text) {
-            AndroidMediaPlayer self = mWeakMediaPlayer.get();
-            if (self == null)
-                return;
+        public void onTimedText(MediaPlayer mp, final TimedText text) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    AndroidMediaPlayer self = mWeakMediaPlayer.get();
+                    if (self == null)
+                        return;
 
-            IjkTimedText ijkText = null;
+                    IjkTimedText ijkText = null;
 
-            if (text != null) {
-                ijkText = new IjkTimedText(text.getBounds(), text.getText());
-            }
+                    if (text != null) {
+                        ijkText = new IjkTimedText(text.getBounds(), text.getText());
+                    }
 
-            notifyOnTimedText(ijkText);
+                    notifyOnTimedText(ijkText);
+                }
+            });
+
         }
     }
 }
